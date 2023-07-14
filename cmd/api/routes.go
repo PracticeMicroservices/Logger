@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"logger/cmd/api/controllers"
+	"logger/data/models"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -13,12 +14,14 @@ import (
 
 type App struct {
 	DB     *mongo.Client
+	Models models.Models
 	Logger controllers.Logger
 }
 
 func NewApp(mongo *mongo.Client) *App {
 	return &App{
 		DB:     mongo,
+		Models: models.New(mongo),
 		Logger: controllers.NewLoggerController(mongo),
 	}
 }
@@ -35,6 +38,8 @@ func (a *App) routes() http.Handler {
 		MaxAge:           300,
 	}))
 	mux.Use(middleware.Heartbeat("/healthCheck"))
+
+	mux.Post("/logger", a.Logger.WriteLog)
 	return mux
 }
 
